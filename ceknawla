@@ -1,0 +1,86 @@
+<?php
+set_time_limit(0);
+date_default_timezone_set('Asia/Jakarta');
+
+// --- KONFIGURASI ---
+$token    = "8161245524:AAHaiadE2nOqs4a44PUTPDt_WRAFtSvzOgM";
+$chat_id  = "8555079660";
+
+// Gunakan hostname murni untuk gethostbyname
+$domains = [
+    "prediksijabarhebat.site", 
+    "rtpjbrgacor.site", 
+    "jabargreat.site", 
+    "buktijpjabar.online", 
+    "venerable-stardust-ed2fc6.netlify.app", 
+    "jabar-ven.b-cdn.net", 
+    "stalwart-faloodeh-2ac3f1.netlify.app", 
+    "fortis-fortuna-adiuvat-v.pages.dev",
+    "lancaw-team.pages.dev" // Perbaikan di sini
+];
+
+$message = "🚨 *KilluaBot Monitoring* 🚨\n";
+$message .= "⏰ " . date("d-m-Y H:i") . " WIB\n\n";
+$is_any_issue = false;
+
+foreach ($domains as $domain) {
+    $ip = gethostbyname($domain);
+    $url = "https://" . $domain . "/?t=" . time();
+    
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_USERAGENT      => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
+    ]);
+    
+    $res = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Deteksi Nawala/Internet Positif
+    $nawala = ($res && preg_match('/internet positif|internetsehat|trust positif|blokir|peringatan/i', $res));
+
+    if ($ip == $domain || $ip == '127.0.0.1') {
+        $status = "💀 *DNS ERROR*"; 
+        $is_any_issue = true;
+    } elseif ($nawala) {
+        $status = "🚫 *NAWALA*"; 
+        $is_any_issue = true;
+    } elseif ($code >= 400 || $code == 0) {
+        $status = "❌ *DOWN ($code)*"; 
+        $is_any_issue = true;
+    } else {
+        $status = "✅ *NORMAL*";
+    }
+
+    $message .= "🌐 *$domain*\n";
+    $message .= "├ IP: `$ip` \n";
+    $message .= "└ Status: $status\n\n";
+}
+
+// --- PENGIRIMAN KE TELEGRAM ---
+$header = ($is_any_issue) ? "🔥 *URGENT ALERT!!* 🔥\n" : "📊 *MONITORING REPORT* 📊\n";
+
+$send_url = "https://api.telegram.org/bot$token/sendMessage";
+$data = [
+    'chat_id' => $chat_id, 
+    'text' => $header . $message, 
+    'parse_mode' => 'Markdown',
+    'disable_web_page_preview' => true
+];
+
+$ch = curl_init($send_url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => http_build_query($data),
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_SSL_VERIFYPEER => false
+]);
+$result = curl_exec($ch);
+curl_close($ch);
+
+echo "Check completed. Report sent to Telegram.";
+?>
