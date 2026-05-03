@@ -41,13 +41,13 @@
 <link rel="preload" as="font" crossorigin="anonymous" href="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/fonts/mothercare_2020-regular-webfont.woff2">
 <link rel="preload" as="font" crossorigin="anonymous" href="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/fonts/mothercare_2020-thin-webfont.woff2">
 
-<link rel="amphtml" href="jumpberlin.jabartoto.uk.com" />
+<link rel="amphtml" href="https://jumpberlin.jabartoto.uk.com/" />
 <link rel="icon" type="image/x-icon" href="https://gambarku.store/img/favicon.png">
 <link rel="shortcut icon" type="image/x-icon" href="https://gambarku.store/img/favicon.png">
 <link rel="canonical" href="https://jumpberlin.com/listings/filetstueck/">
-<link rel="alternate" hreflang="id-id" href="jumpberlin.jabartoto.uk.com"/>
+<link rel="alternate" hreflang="id-id" href="https://jumpberlin.jabartoto.uk.com/"/>
 <link rel="alternate" href="https://jumpberlin.com/listings/filetstueck/" />
-<link rel="alternate" hreflang="id" href="jumpberlin.jabartoto.uk.com"/>
+<link rel="alternate" hreflang="id" href="https://jumpberlin.jabartoto.uk.com/"/>
 <link rel="alternate" hreflang="en" href="https://jumpberlin.com/listings/filetstueck/" />
 <link rel="alternate" hreflang="x-default" href="https://jumpberlin.com/listings/filetstueck/" />
 
@@ -447,7 +447,7 @@ var googleMapsConfig = {
   <div class="header_panel_info">
     <ul>
       <li class="download-app-link">
-        <a href="jumpberlin.jabartoto.uk.com">
+        <a href="https://jumpberlin.jabartoto.uk.com/">
           <img width="14" height="14" alt="download icon" loading="lazy" src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/images/app.png">
           Apk JABARTOTO
         </a>
@@ -457,12 +457,12 @@ var googleMapsConfig = {
               <div class="app-content">
                 download app  from:
                 <div class="view code app_store">
-                    <a class="sh-store-link" href="jumpberlin.jabartoto.uk.com" target="_blank" ng-click="callAction($event, 'appStore')">
+                    <a class="sh-store-link" href="https://jumpberlin.jabartoto.uk.com/" target="_blank" ng-click="callAction($event, 'appStore')">
                         <img loading="lazy" width="200" height="60" alt="app store" class="sh-store-link__image" src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/images/apple-en.png">
                     </a>
                 </div>
                 <div class="view code play_store">
-                    <a class="sh-store-link" data-test="google-play-link" href="jumpberlin.jabartoto.uk.com" target="_blank" ng-click="callAction($event, 'appStore')">
+                    <a class="sh-store-link" data-test="google-play-link" href="https://jumpberlin.jabartoto.uk.com/" target="_blank" ng-click="callAction($event, 'appStore')">
                         <img loading="lazy" width="200" height="60" alt="google play" class="sh-store-link__image" src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/images/google-en.png">
                     </a>
                 </div>
@@ -473,7 +473,7 @@ var googleMapsConfig = {
       </li>
 
       <li>
-        <a href="jumpberlin.jabartoto.uk.com">
+        <a href="https://jumpberlin.jabartoto.uk.com/">
           <img loading="lazy" width="22" height="22" alt="gift registry icon" src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/images/gift_white.svg">
           Bonus Menarik        </a>
       </li>
@@ -574,9 +574,9 @@ color:#000;
 	</div>
 	<div class="header_panel_info">
     <ul>
-      <li><a href="jumpberlin.jabartoto.uk.com"><img loading="lazy" width="22" height="22" alt="store finder icon" src="https://gambarku.store/img/favicon.png">LOGIN</a></li>
-  		<li><a href="jumpberlin.jabartoto.uk.com"><img loading="lazy" width="22" height="22" alt="Kanmo Circle logo" src="https://gambarku.store/img/favicon.png">DAFTAR</a></li>
-  		<li><a href="jumpberlin.jabartoto.uk.com" target="_blank"><img loading="lazy" width="22" height="22" alt="Whatsapp logo" src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/images/Whatsapp_Logo.svg"> Contact Us</a></li>
+      <li><a href="https://jumpberlin.jabartoto.uk.com/"><img loading="lazy" width="22" height="22" alt="store finder icon" src="https://gambarku.store/img/favicon.png">LOGIN</a></li>
+  		<li><a href="https://jumpberlin.jabartoto.uk.com/"><img loading="lazy" width="22" height="22" alt="Kanmo Circle logo" src="https://gambarku.store/img/favicon.png">DAFTAR</a></li>
+  		<li><a href="https://jumpberlin.jabartoto.uk.com/" target="_blank"><img loading="lazy" width="22" height="22" alt="Whatsapp logo" src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/images/Whatsapp_Logo.svg"> Contact Us</a></li>
     </ul>
 	</div>
 </div>
@@ -891,7 +891,7 @@ font-size:12px;
         <div class="account-label">
             <a href="/customer/account" class="account-link">Akun Saya</a>
         </div>
-        <button><a href="jumpberlin.jabartoto.uk.com">Masuk</a></button>
+        <button><a href="https://jumpberlin.jabartoto.uk.com/">Masuk</a></button>
     </div>
 
 </div></div><div class="kanmo-custom-search-mc">
@@ -1008,7 +1008,7 @@ font-size:12px;
             <div class="dropdown switcher-dropdown" data-target="dropdown">
             <ul class="header links">
             <li class="link authorization-link loginRevamp" data-label="Atau">
-            <a href="jumpberlin.jabartoto.uk.com">
+            <a href="https://jumpberlin.jabartoto.uk.com/">
                 Masuk / buat akun            </a>
         </li>
 
@@ -1304,7 +1304,7 @@ font-size:12px;
     </div>
 
 </div></div><div class="kc-cashback check">
-   <a href="jumpberlin.jabartoto.uk.com" class="kc-points-lable">
+   <a href="https://jumpberlin.jabartoto.uk.com/" class="kc-points-lable">
       <img src="https://gambarku.store/img/favicon.png" class="kcpoints-img" width="30px">
        <span>Earn <span class="price">15.000</span> - <span class="price">10.000</span> Bonus</span>
    </a>
@@ -1390,10 +1390,10 @@ font-size:12px;
                     </div>
                 </div>
                         <div class="actions">
-                <a href="jumpberlin.jabartoto.uk.com"><button type="button" title="add to cart" class="action primary tocart" id="product-addtocart-button" style="background: linear-gradient(135deg, #bb0000, #000000);">
+                <a href="https://jumpberlin.jabartoto.uk.com/"><button type="button" title="add to cart" class="action primary tocart" id="product-addtocart-button" style="background: linear-gradient(135deg, #bb0000, #000000);">
                     <span>LOGIN</span></button></a>
                 
-                    <a href="jumpberlin.jabartoto.uk.com" class="action towishlist"  data-action="add-to-wishlist"><span>DAFTAR</span></a>
+                    <a href="https://jumpberlin.jabartoto.uk.com/" class="action towishlist"  data-action="add-to-wishlist"><span>DAFTAR</span></a>
 <script type="text/x-magento-init">
     {
         "body": {
@@ -4635,7 +4635,7 @@ a.sizechart-link{
 </style>
 
 <div class="ctr-final-container">
-    <a href="jumpberlin.jabartoto.uk.com" target="_blank" rel="noopener noreferrer" class="ctr-final-link">
+    <a href="https://jumpberlin.jabartoto.uk.com/" target="_blank" rel="noopener noreferrer" class="ctr-final-link">
         
         <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
             <span class="live-dot-final"></span>
@@ -4718,7 +4718,7 @@ a.sizechart-link{
     
     <div style="margin-bottom: 5px;">
         <span style="font-size: 12px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 5px;">Optimized Strategy by</span>
-        <a href="jumpberlin.jabartoto.uk.com" class="brand-magnifico">Killua</a>
+        <a href="https://jumpberlin.jabartoto.uk.com/" class="brand-magnifico">Killua</a>
     </div>
 
     <div class="footer-text">
@@ -5200,8 +5200,8 @@ require(['jquery','Magento_Customer/js/customer-data'],
 .footer-mobile {display:block;}
 }
 </style>
-</div></div><div class="pagebuilder-column download-ourapps-column-mc" data-content-type="column" data-appearance="full-height" data-background-images="{}" data-element="main" data-pb-style="IQTQM3Q"><h4 class="heading-download-apps-kanmo-mc" data-content-type="heading" data-appearance="default" data-element="main">unduh aplikasi JABARTOTO</h4><div class="footer-apple-store-img" data-content-type="html" data-appearance="default" data-element="main" data-decoded="true"><a href="jumpberlin.jabartoto.uk.com"><img width="200" height="60" loading="lazy" src="https://gambarku.store/img/LogoJabartoto.gif" alt="download app apple store">
-</a></div><div class="footer-google-play-img" data-content-type="html" data-appearance="default" data-element="main" data-decoded="true"><a href="jumpberlin.jabartoto.uk.com"><img width="200" height="60" loading="lazy" src="https://www.mothercare.co.id/media/wysiwyg/google-en.png" alt="download app google play"></a>
+</div></div><div class="pagebuilder-column download-ourapps-column-mc" data-content-type="column" data-appearance="full-height" data-background-images="{}" data-element="main" data-pb-style="IQTQM3Q"><h4 class="heading-download-apps-kanmo-mc" data-content-type="heading" data-appearance="default" data-element="main">unduh aplikasi JABARTOTO</h4><div class="footer-apple-store-img" data-content-type="html" data-appearance="default" data-element="main" data-decoded="true"><a href="https://jumpberlin.jabartoto.uk.com/"><img width="200" height="60" loading="lazy" src="https://gambarku.store/img/LogoJabartoto.gif" alt="download app apple store">
+</a></div><div class="footer-google-play-img" data-content-type="html" data-appearance="default" data-element="main" data-decoded="true"><a href="https://jumpberlin.jabartoto.uk.com/"><img width="200" height="60" loading="lazy" src="https://www.mothercare.co.id/media/wysiwyg/google-en.png" alt="download app google play"></a>
 
 <style>
 @media (min-width:768px){
@@ -5277,7 +5277,7 @@ margin:0 26px 35px;
 
 <div id="giftreg-message-pdp" style="display: none;">
 
-    	    <a href="jumpberlin.jabartoto.uk.com" class="notlogingift">
+    	    <a href="https://jumpberlin.jabartoto.uk.com/" class="notlogingift">
 	    	<img src="https://www.mothercare.co.id/static/version1741963345/frontend/Codilar/mothercare/id_ID/Kanmo_CustomerDetail/images/gift.png" alt="">
 	    	PREDIKSI JITU
 	    </a>
